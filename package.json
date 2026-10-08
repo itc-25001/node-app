@@ -1,0 +1,25 @@
+{
+  "name": "node-app",
+  "module": "app.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev:app": "bun app.ts",
+    "dev:css": "bunx tailwindcss -m -i app.css -o style.css",
+    "dev": "bun run --sequential dev:app",
+    "watch:app": "bunx nodemon -w . -e ts,pug,css -x 'bun run app.ts'",
+    "watch:css": "bunx tailwindcss --watch=always -m -i app.css -o style.css",
+    "watch": "bun run --parallel 'watch:*'"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/pug": "^2.0.10",
+    "nodemon": "^3.1.14"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "pug": "^3.0.4"
+  }
+}
