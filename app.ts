@@ -2,7 +2,9 @@ import http from 'node:http'
 import fs from 'node:fs/promises'
 import pug from 'pug'
 import {URL} from 'node:url'
-
+import qs from 'node:querystring'
+import consumers from 'node:stream/consumers'
+import * as querystring from 'node:querystring'
 
 const indexPug = pug.compileFile('./index.pug')
 const otherPug = pug.compileFile('./other.pug')
@@ -22,23 +24,11 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
 
     switch (reqUrl.pathname) {
         case '/': {
-            const content = indexPug({
-                title: 'Index',
-                content: 'これはテンプレートを使ったサンプルページです！',
-            })
-            res.setHeader('Content-Type', 'text/html')
-            res.write(content)
-            res.end()
+            responseIndex(req, res)
             break
         }
         case '/other': {
-            const content = otherPug({
-                title: 'Other',
-                content: 'これは新しく用意したページです！',
-            })
-            res.setHeader('Content-Type', 'text/html')
-            res.write(content)
-            res.end()
+            await responseOther(req, res)
             break
         }
         case '/style.css': {
@@ -53,4 +43,38 @@ async function getFromClient(req: http.IncomingMessage, res: http.ServerResponse
             res.end('Not Found')
             break
     }
+}
+
+// index のアクセス処理
+function responseIndex(req: http.IncomingMessage, res: http.ServerResponse) {
+    const content = indexPug({
+        title: 'Index',
+        content: 'これはIndexページです。'
+    })
+    res.setHeader('Content-Type', 'text/html')
+    res.write(content)
+    res.end()
+}
+
+// other のアクセス処理
+async function responseOther(req: http.IncomingMessage, res: http.ServerResponse) {
+    // POST以外でアクセス時の処理
+    if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.setHeader('Content-Type', 'text/plain')
+        res.write('Method not allowed')
+        res.end()
+        return
+    }
+
+    // ここからPOSTアクセス時の処理
+    const body = await consumers.text(req)
+    const postData = qs.parse(body)
+    const content = otherPug({
+        title: 'Other',
+        content: `これはOtherページです。あなたは「${postData.msg}」と書きました。`
+    })
+    res.setHeader('Content-Type', 'text/html')
+    res.write(content)
+    res.end()
 }

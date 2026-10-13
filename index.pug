@@ -10,5 +10,6 @@ html(lang='ja')
       h1.display-4= title
     main
       p= content
-      p
-        a(href='/other') Other Pageに移動 >>
+      form(method='post' action='/other')
+        input.message-input(type='text' name='msg')
+        button(type='submit') Click
