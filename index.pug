@@ -5,8 +5,10 @@ html(lang='ja')
     title= title
     link(type='text/css' href='/style.css' rel='stylesheet')
 
-  body
+  body.container.mx-auto.px-4
     header
-      h1 = Index
+      h1.display-4= title
     main
-      p = content
+      p= content
+      p
+        a(href='/other') Other Pageに移動 >>

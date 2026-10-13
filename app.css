@@ -2,14 +2,21 @@
 
 @import "tailwindcss";
 
-.display-4{
+* {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+.display-4 {
     @apply mb-2 text-6xl font-light leading-16;
 }
 
-p{
+p {
     @apply mb-4;
 }
 
-a{
-    @apply text-blue-500 underline decoration-blue-500 cursor-pointer hover:text-blue-700;
+a {
+    @apply text-blue-500 underline decoration-blue-500 cursor-pointer
+    hover:text-blue-700;
 }
