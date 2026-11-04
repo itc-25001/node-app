@@ -1,6 +1,6 @@
 import {type Request, type Response, Router} from 'express'
 import {Pool} from 'pg'
-import {body, matchedData, validationResult} from 'express-validator'
+import {body,query, matchedData, validationResult} from 'express-validator'
 
 const router = Router()
 
@@ -73,7 +73,7 @@ router.get('/add', async (_req: Request, res: Response) => {
 router.post('/add',
   body('name', 'NAME は必ず入力してください').notEmpty(),
   body('email', 'E-MAIL はメールアドレスを入力してください').isEmail(),
-  body('age', 'AGE は年齢(整数)を入力してください').isInt(),
+  body('age', 'AGEは0以上120以下の整数で入力してください').isInt({min:0,max:120}),
   async (req: Request, res: Response) => {
     // バリデーションの結果を取り出す。
     const errors = validationResult(req)
@@ -111,8 +111,13 @@ router.post('/add',
     res.redirect('/users')
   })
 
-router.get('/show', async (req: Request<{}, {}, {}, UserQueryParams>, res: Response) => {
-  const id = req.query.id
+router.get('/show', query('id').default(0).isInt({min: 1}),
+async (req: Request, res: Response) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.redirect('/mydata')
+  }
+  const {id} = matchedData<UserQueryParams>(req)
   const db = await dbPool.connect()
 
   try {
@@ -128,6 +133,7 @@ router.get('/show', async (req: Request<{}, {}, {}, UserQueryParams>, res: Respo
 })
 
 router.get('/edit', async (req: Request<{}, {}, {}, UserQueryParams>, res: Response) => {
+
   const id = req.query.id
   const db = await dbPool.connect()
 
