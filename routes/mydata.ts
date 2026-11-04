@@ -1,6 +1,6 @@
 import {type Request, type Response, Router} from 'express'
 import {Pool} from 'pg'
-import {body,query, matchedData, validationResult} from 'express-validator'
+import {body, matchedData, query, validationResult} from 'express-validator'
 
 const router = Router()
 
@@ -46,6 +46,13 @@ interface UserQueryParams {
   id: number
 }
 
+// mydata のフォーム値チェックルール
+const mydataValidators = [
+  body('name', 'NAME は必ず入力してください').notEmpty(),
+  body('email', 'E-MAIL はメールアドレスを入力してください').isEmail(),
+  body('age', 'AGE は0以上120以下の整数を入力してください').isInt({min: 0, max: 120}),
+]
+
 // GETアクセスの処理
 router.get('/', async (req: Request, res: Response) => {
   const db = await dbPool.connect()
@@ -55,7 +62,7 @@ router.get('/', async (req: Request, res: Response) => {
       title: 'Users!',
       content: result.rows,
     }
-    res.render('users/index', data)
+    res.render('mydata/index', data)
   } finally {
     db.release()
   }
@@ -67,79 +74,76 @@ router.get('/add', async (_req: Request, res: Response) => {
     content: '新しいレコードを入力',
     form: {name: '', email: '', age: ''},
   }
-  res.render('users/add', data)
+  res.render('mydata/add', data)
 })
 
-router.post('/add',
-  body('name', 'NAME は必ず入力してください').notEmpty(),
-  body('email', 'E-MAIL はメールアドレスを入力してください').isEmail(),
-  body('age', 'AGEは0以上120以下の整数で入力してください').isInt({min:0,max:120}),
-  async (req: Request, res: Response) => {
-    // バリデーションの結果を取り出す。
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      // errors が空っぽではないということは、入力値に問題があったということ
-      res.render('users/add', {
-        title: 'Users/Add',
-        content: '新しいレコードを入力',
-        form: req.body,
-        errors: errors.array(),
-      })
-      return
-    }
-
-    const {name, email, age} = matchedData<RequestUserAdd>(req)
-    const db = await dbPool.connect()
-
-    try {
-      // トランザクション開始
-      await db.query('BEGIN')
-
-      // INSERT 文の実行
-      await db.query('INSERT INTO mydata (name, email, age) VALUES ($1, $2, $3)',
-        [name, email, age],
-      )
-
-      // コミット
-      await db.query('COMMIT')
-    } catch (error) {
-      // トランザクションのロールバック
-      await db.query('ROLLBACK')
-    } finally {
-      db.release()
-    }
-    res.redirect('/users')
-  })
-
-router.get('/show', query('id').default(0).isInt({min: 1}),
-async (req: Request, res: Response) => {
+router.post('/add', mydataValidators, async (req: Request, res: Response) => {
+  // バリデーションの結果を取り出す。
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.redirect('/mydata')
+    // errors が空っぽではないということは、入力値に問題があったということ
+    res.render('mydata/add', {
+      title: 'Users/Add',
+      content: '新しいレコードを入力',
+      form: req.body,
+      errors: errors.array(),
+    })
+    return
   }
-  const {id} = matchedData<UserQueryParams>(req)
+
+  const {name, email, age} = matchedData<RequestUserAdd>(req)
   const db = await dbPool.connect()
 
   try {
-    const result = await db.query<mydataTable>('SELECT * FROM mydata WHERE id = $1', [id])
-    res.render('users/show', {
-      title: 'Users/show',
-      content: `id = ${id} のレコード`,
-      mydata: result.rows[0] || {},
-    })
+    // トランザクション開始
+    await db.query('BEGIN')
+
+    // INSERT 文の実行
+    await db.query('INSERT INTO mydata (name, email, age) VALUES ($1, $2, $3)',
+      [name, email, age],
+    )
+
+    // コミット
+    await db.query('COMMIT')
+  } catch (error) {
+    // トランザクションのロールバック
+    await db.query('ROLLBACK')
   } finally {
     db.release()
   }
+  res.redirect('/mydata')
 })
 
-router.get('/edit', async (req: Request<{}, {}, {}, UserQueryParams>, res: Response) => {
+router.get('/show',
+  query('id').isInt({min: 1}),
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.redirect('/mydata')
+    }
+    const {id} = matchedData<UserQueryParams>(req)
 
+    const db = await dbPool.connect()
+
+    try {
+      const result = await db.query<mydataTable>('SELECT * FROM mydata WHERE id = $1', [id])
+      res.render('mydata/show', {
+        title: 'Users/show',
+        content: `id = ${id} のレコード`,
+        mydata: result.rows[0] || {},
+      })
+    } finally {
+      db.release()
+    }
+  })
+
+router.get('/edit', async (req: Request<{}, {}, {}, UserQueryParams>, res: Response) => {
   const id = req.query.id
   const db = await dbPool.connect()
 
   try {
     const result = await db.query<mydataTable>('SELECT * FROM mydata WHERE id = $1', [id])
-    res.render('users/edit', {
+    res.render('mydata/edit', {
       title: 'Users/edit',
       content: `id = ${id} のレコードを編集`,
       mydata: result.rows[0] || {},
@@ -149,33 +153,47 @@ router.get('/edit', async (req: Request<{}, {}, {}, UserQueryParams>, res: Respo
   }
 })
 
-router.post('/edit', async (req: Request<{}, {}, RequestUserEdit>, res: Response) => {
-  const {id, name, email, age} = req.body
-  const db = await dbPool.connect()
+router.post('/edit', mydataValidators, body('id').isInt({min: 1}),
+  async (req: Request, res: Response) => {
+    // バリデーションの結果を取り出す。
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      // errors が空っぽではないということは、入力値に問題があったということ
+      res.render('mydata/edit', {
+        title: 'Users/Edit',
+        content: '新しいレコードを入力',
+        mydata: req.body,
+        errors: errors.array(),
+      })
+      return
+    }
 
-  try {
-    // トランザクション開始
-    await db.query('BEGIN')
+    const {id, name, email, age} = matchedData<RequestUserEdit>(req)
+    const db = await dbPool.connect()
 
-    // 更新処理
-    await db.query(
-      'UPDATE mydata SET name = $1, email = $2, age = $3 WHERE id = $4',
-      [name, email, age, id],
-    )
+    try {
+      // トランザクション開始
+      await db.query('BEGIN')
 
-    // トランザクションコミット
-    await db.query('COMMIT')
+      // 更新処理
+      await db.query(
+        'UPDATE mydata SET name = $1, email = $2, age = $3 WHERE id = $4',
+        [name, email, age, id],
+      )
 
-    // リダイレクト
-    res.redirect('/users')
-  } catch (error) {
-    console.error(error)
-    // トランザクションのロールバック
-    await db.query('ROLLBACK')
-  } finally {
-    db.release()
-  }
-})
+      // トランザクションコミット
+      await db.query('COMMIT')
+
+      // リダイレクト
+      res.redirect('/mydata')
+    } catch (error) {
+      console.error(error)
+      // トランザクションのロールバック
+      await db.query('ROLLBACK')
+    } finally {
+      db.release()
+    }
+  })
 
 router.get('/delete', async (req: Request<{}, {}, {}, UserQueryParams>, res: Response) => {
   const id = req.query.id
@@ -183,7 +201,7 @@ router.get('/delete', async (req: Request<{}, {}, {}, UserQueryParams>, res: Res
 
   try {
     const result = await db.query<mydataTable>('SELECT * FROM mydata WHERE id = $1', [id])
-    res.render('users/delete', {
+    res.render('mydata/delete', {
       title: 'Users/delete',
       content: `id = ${id} のレコード`,
       mydata: result.rows[0] || {},
