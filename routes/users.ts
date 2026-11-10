@@ -155,4 +155,45 @@ router.post('/edit',
   },
 )
 
+router.get('/delete/:id',
+  param('id').toInt().isInt({min: 1}),
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req)
+    // id が正しくない場合はリダイレクト
+    if (!errors.isEmpty()) {
+      return res.redirect('/users')
+    }
+
+    const {id} = matchedData<{ id: number }>(req)
+    const user = await prisma.user.findUnique({where: {id}})
+
+    if (!user) {
+      // 指定の id に該当するユーザーが存在しない場合は何もせずにリダイレクト
+      return res.redirect('/users')
+    }
+
+    res.render('users/delete', {
+      title: 'Users/Delete',
+      user,
+    })
+  },
+)
+
+router.post('/delete',
+  body('id').toInt().isInt({min: 1}),
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req)
+    // id が正しくない場合はリダイレクト
+    if (!errors.isEmpty()) {
+      return res.redirect('/users')
+    }
+
+    const {id} = matchedData<{ id: number }>(req)
+
+    await prisma.user.delete({where: {id}})
+
+    return res.redirect('/users')
+  },
+)
+
 export default router

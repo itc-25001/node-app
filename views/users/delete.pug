@@ -1,0 +1,19 @@
+extends ../layout
+
+block content
+  table
+    tr
+      th NAME
+      td=user.name
+    tr
+      th PASSWORD
+      td
+    tr
+      th E-MAIL
+      td= user.email
+    tr
+      th AGE
+      td= user.age
+
+
+  form(method='post' action='/users/delete')
