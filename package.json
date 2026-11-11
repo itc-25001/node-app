@@ -32,6 +32,7 @@
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "7",
     "argon2": "^0.45.2",
+    "cdate": "^0.0.7",
     "cookie-parser": "^1.4.7",
     "debug": "^4.4.3",
     "express": "^5.3.0",

@@ -8,6 +8,8 @@ import session from 'express-session'
 import createError, {HttpError} from 'http-errors'
 
 import indexRouter from './routes/index'
+import postsRouter from './routes/posts'
+import {cdate} from 'cdate'
 
 const app = express()
 
@@ -31,8 +33,14 @@ app.use(session({
   },
 }))
 
+// Pug で使う日時のフォーマット関数
+app.locals.dateFormat = (dt:Date) => cdate(dt)
+  .tz('Asia/Tokyo')
+  .format('YYYY-MM-DD HH:mm:ss')
+
 // register routes
 app.use('/', indexRouter)
+app.use('/posts', postsRouter)
 
 // catch 404 and forward to error handler
 app.use(async (_req: Request, _res: Response, next: NextFunction) => {

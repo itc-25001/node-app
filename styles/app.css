@@ -46,5 +46,37 @@ button[type='submit'] {
 }
 
 ul.error {
-    @apply mt-6 max-w-sm mx-auto space-y-1 text-danger font-semibold list-disc list-inside;
+    @apply mt-6 max-w-sm mx-auto space-y-1 text-danger font-semibold
+    list-disc list-inside;
+}
+
+section.messages {
+    @apply relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base
+    border border-default;
+}
+
+table.posts {
+    @apply w-full text-sm text-left rtl:text-right text-body;
+}
+
+tr.post {
+    @apply bg-neutral-primary border-b border-default;
+}
+
+tr.post th {
+    @apply px-6 py-4 font-medium text-heading whitespace-nowrap;
+}
+
+tr.post td {
+    @apply px-6 py-4;
+}
+
+.pagination {
+    @apply flex space-x-2 mt-6 mx-auto justify-center;
+}
+
+a.previous-button, a.next-button {
+    @apply text-body bg-neutral-secondary-medium border border-default-medium
+    hover:bg-neutral-tertiary-medium hover:text-heading shadow-xs font-medium
+    leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none;
 }
