@@ -1,10 +1,13 @@
 {
   "name": "message_board",
-  "module": "index.ts",
+  "module": "app.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "typecheck": "bun check"
+    "typecheck": "bun check",
+    "watch:app": "bunx --bun nodemon -w . -e ts,pug -x 'bun app.ts'",
+    "watch:css": "bunx --bun tailwindcss --watch=always -m -i ./styles/app.css -o ./public/css/style.css",
+    "watch": "bun run --parallel 'watch:*'"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.5",
